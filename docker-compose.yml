@@ -9,7 +9,6 @@ services:
     env_file:
       - .env
     volumes:
-      # Format: /path/di/komputer/user:/path/di/dalam/docker
-      - /run/media/roniserv/V-GEN:/run/media/roniserv/V-GEN
-      - /home/roniserv/:/home/roniserv/
+      - ${HOST_PATH_SSD}:${HOST_PATH_SSD}
+      - ${HOST_PATH_HDD}:${HOST_PATH_HDD}
     restart: unless-stopped
