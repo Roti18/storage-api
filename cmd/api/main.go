@@ -75,12 +75,13 @@ func main() {
 	// Health check
 	app.Get("/ping", func(c *fiber.Ctx) error {
 		startTime := c.Locals("startTime").(time.Time)
-		latency := time.Since(startTime).Nanoseconds()
+		elapsed := time.Since(startTime)
 		return c.JSON(fiber.Map{
-			"status":  "ok",
-			"latency": latency,
-			"mounts":  cfg.StorageMounts,
-			"message": "pong",
+			"status":     "ok",
+			"latency_ms": float64(elapsed.Nanoseconds()) / 1e6,
+			"latency_ns": elapsed.Nanoseconds(),
+			"mounts":     cfg.StorageMounts,
+			"message":    "pong",
 		})
 	})
 
