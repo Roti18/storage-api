@@ -35,3 +35,15 @@ api-server
 
 # Docker
 .docker/
+
+# SQLite
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+
+# Logs
+*.log
+
+# Temp
+tmp/
