@@ -36,7 +36,7 @@ func getEnv(key, fallback string) string {
 	return fallback
 }
 
-// Parse "name1:path1,name2:path2" jadi map
+// Parse "name1:path1,name2:path2" into a map
 func parseStorageMounts(mountsStr string) map[string]string {
 	mounts := make(map[string]string)
 
