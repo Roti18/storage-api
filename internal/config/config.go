@@ -11,8 +11,7 @@ import (
 type Config struct {
 	Port          string
 	StorageMounts map[string]string // name -> path
-	AuthUsername  string
-	AuthPassword  string
+	Password      string
 	JwtSecret     string
 }
 
@@ -25,8 +24,7 @@ func LoadConfig() *Config {
 	return &Config{
 		Port:          getEnv("APP_PORT", "3000"),
 		StorageMounts: parseStorageMounts(getEnv("STORAGE_MOUNTS", "default:/tmp")),
-		AuthUsername:  getEnv("AUTH_USERNAME", "admin"),
-		AuthPassword:  getEnv("AUTH_PASSWORD", "admin"),
+		Password:      getEnv("PASSWORD", "admin"),
 		JwtSecret:     getEnv("JWT_SECRET", "default_secret"),
 	}
 }
@@ -44,11 +42,17 @@ func parseStorageMounts(mountsStr string) map[string]string {
 
 	pairs := strings.Split(mountsStr, ",")
 	for _, pair := range pairs {
-		parts := strings.SplitN(strings.TrimSpace(pair), ":", 2)
+		pair = strings.TrimSpace(pair)
+		if pair == "" {
+			continue
+		}
+		parts := strings.SplitN(pair, ":", 2)
 		if len(parts) == 2 {
 			name := strings.TrimSpace(parts[0])
 			path := strings.TrimSpace(parts[1])
-			mounts[name] = path
+			if name != "" && path != "" {
+				mounts[name] = path
+			}
 		}
 	}
 
