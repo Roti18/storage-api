@@ -17,7 +17,6 @@ func NewAuthHandler(cfg *config.Config) *AuthHandler {
 }
 
 type LoginRequest struct {
-	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
@@ -36,17 +35,17 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		})
 	}
 
-	// Validasi username & password
-	if req.Username != h.cfg.AuthUsername || req.Password != h.cfg.AuthPassword {
+	// Validasi password saja (username diabaikan)
+	if req.Password != h.cfg.Password {
 		return c.Status(401).JSON(fiber.Map{
-			"error": "invalid username or password",
+			"error": "invalid password",
 		})
 	}
 
 	// Generate JWT token (valid 24 jam)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": req.Username,
-		"exp":      time.Now().Add(24 * time.Hour).Unix(),
+		"username": "admin",
+		"exp":      time.Now().Add(7 * 24 * time.Hour).Unix(), // Perpanjang ke 7 hari biar jarang login
 		"iat":      time.Now().Unix(),
 	})
 
