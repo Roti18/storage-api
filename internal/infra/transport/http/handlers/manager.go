@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+	"os"
 	"path/filepath"
 	"storages-api/internal/app"
 	"storages-api/internal/domain"
@@ -146,34 +148,28 @@ func (h *FileManagerHandler) DownloadFile(c *fiber.Ctx) error {
 		})
 	}
 
-	file, err := h.service.DownloadFile(storage, path)
+	fullPath, err := h.service.GetRealPath(storage, path)
 	if err != nil {
-		return c.Status(404).JSON(fiber.Map{
-			"error": "file not found",
-		})
+		return c.Status(404).JSON(fiber.Map{"error": "file not found"})
 	}
-	// JANGAN defer file.Close() - SendStream akan handle close otomatis
 
-	// Force download
+	file, err := os.Stat(fullPath)
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "failed to stat file"})
+	}
+
+	// Force set Content-Length for faster downloads and progress tracking on mobile devices
+	c.Set("Content-Length", fmt.Sprintf("%d", file.Size()))
 	c.Set("Content-Disposition", "attachment; filename="+filepath.Base(path))
 
-	// Auto-detect Content-Type berdasarkan extension
-	ext := filepath.Ext(path)
+	ext := strings.ToLower(filepath.Ext(path))
 	switch ext {
 	case ".jpg", ".jpeg":
 		c.Set("Content-Type", "image/jpeg")
 	case ".png":
 		c.Set("Content-Type", "image/png")
-	case ".gif":
-		c.Set("Content-Type", "image/gif")
-	case ".webp":
-		c.Set("Content-Type", "image/webp")
 	case ".mp4":
 		c.Set("Content-Type", "video/mp4")
-	case ".webm":
-		c.Set("Content-Type", "video/webm")
-	case ".mp3":
-		c.Set("Content-Type", "audio/mpeg")
 	case ".pdf":
 		c.Set("Content-Type", "application/pdf")
 	case ".txt":
@@ -182,7 +178,7 @@ func (h *FileManagerHandler) DownloadFile(c *fiber.Ctx) error {
 		c.Set("Content-Type", "application/octet-stream")
 	}
 
-	return c.SendStream(file)
+	return c.SendFile(fullPath)
 }
 
 // GET /api/preview?storage=ssd&path=/image.jpg
@@ -208,7 +204,7 @@ func (h *FileManagerHandler) PreviewFile(c *fiber.Ctx) error {
 		})
 	}
 
-	// Preview inline di browser
+	// Inline preview in browser
 	c.Set("Content-Disposition", "inline; filename="+filepath.Base(path))
 
 	// Auto-detect Content-Type
