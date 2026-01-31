@@ -10,7 +10,7 @@ import (
 
 func AuthMiddleware(cfg *config.Config) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		// Ambil Authorization header
+		// Get Authorization header
 		authHeader := c.Get("Authorization")
 		if authHeader == "" {
 			return c.Status(401).JSON(fiber.Map{
@@ -30,7 +30,7 @@ func AuthMiddleware(cfg *config.Config) fiber.Handler {
 
 		// Verify JWT token
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			// Validasi signing method
+			// Validate signing method
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fiber.NewError(401, "invalid signing method")
 			}
@@ -43,7 +43,7 @@ func AuthMiddleware(cfg *config.Config) fiber.Handler {
 			})
 		}
 
-		// Token valid, lanjutkan ke handler
+		// Token is valid, continue to handler
 		return c.Next()
 	}
 }
