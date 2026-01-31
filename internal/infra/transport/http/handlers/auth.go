@@ -35,17 +35,17 @@ func (h *AuthHandler) Login(c *fiber.Ctx) error {
 		})
 	}
 
-	// Validasi password saja (username diabaikan)
+	// Validate password only (username is ignored)
 	if req.Password != h.cfg.Password {
 		return c.Status(401).JSON(fiber.Map{
 			"error": "invalid password",
 		})
 	}
 
-	// Generate JWT token (valid 24 jam)
+	// Generate JWT token (valid for 7 days)
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": "admin",
-		"exp":      time.Now().Add(7 * 24 * time.Hour).Unix(), // Perpanjang ke 7 hari biar jarang login
+		"exp":      time.Now().Add(7 * 24 * time.Hour).Unix(), // Extended to 7 days for less frequent login
 		"iat":      time.Now().Unix(),
 	})
 
