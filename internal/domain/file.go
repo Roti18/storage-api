@@ -9,6 +9,7 @@ type FileInfo struct {
 	ModTime   time.Time `json:"mod_time"`
 	IsDir     bool      `json:"is_dir"`
 	Extension string    `json:"extension"`
+	ItemCount int       `json:"item_count"`
 	Path      string    `json:"path"`
 }
 
@@ -35,6 +36,10 @@ type UploadResponse struct {
 }
 
 type StorageInfo struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
+	Name      string `json:"name"`
+	Path      string `json:"path"`
+	TotalSize uint64 `json:"total_size"`
+	UsedSize  uint64 `json:"used_size"`
+	FreeSize  uint64 `json:"free_size"`
+	IsMounted bool   `json:"is_mounted"`
 }
