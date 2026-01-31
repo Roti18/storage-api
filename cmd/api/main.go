@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 )
@@ -19,6 +20,11 @@ import (
 func main() {
 	// Load Config
 	cfg := config.LoadConfig()
+
+	fmt.Printf("DEBUG: Loaded %d storage mounts\n", len(cfg.StorageMounts))
+	for k, v := range cfg.StorageMounts {
+		fmt.Printf("DEBUG: Storage [%s] -> Path [%s]\n", k, v)
+	}
 
 	// Init Fiber App
 	app := fiber.New(fiber.Config{
@@ -33,6 +39,9 @@ func main() {
 		return c.Next()
 	})
 	app.Use(logger.New())
+	app.Use(compress.New(compress.Config{
+		Level: compress.LevelBestSpeed, // Optimize for speed
+	}))
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: "*",
 		AllowMethods: "GET,POST,PUT,DELETE",
@@ -48,29 +57,36 @@ func main() {
 	// Routes
 	api := app.Group("/api")
 
-	// AUTH (Public - no auth required)
+	// Public - only login is public
 	api.Post("/login", authHandler.Login)
 
-	// READ (Public - no auth required)
-	api.Get("/files", fileHandler.ListFiles)       // List files/folders
-	api.Get("/preview", fileHandler.PreviewFile)   // Preview file (inline)
-	api.Get("/download", fileHandler.DownloadFile) // Download file (force download)
-
-	// WRITE OPERATIONS (Protected - auth required)
+	// Protected - all file operations require auth
 	protected := api.Use(middleware.AuthMiddleware(cfg))
+
+	// READ
+	protected.Get("/files", fileHandler.ListFiles)       // List files/folders
+	protected.Get("/preview", fileHandler.PreviewFile)   // Preview file (inline)
+	protected.Get("/download", fileHandler.DownloadFile) // Download file (force download)
 
 	// CREATE
 	protected.Post("/folder", fileHandler.CreateFolder) // Create new folder
 	protected.Post("/upload", fileHandler.UploadFile)   // Upload file
 
 	// UPDATE
-	protected.Put("/rename", fileHandler.RenameOrMove) // Rename or move file/folder
+	protected.Put("/rename", fileHandler.RenameOrMove)  // Rename or move file/folder
+	protected.Post("/copy", fileHandler.Copy)           // Copy file/folder
+	protected.Post("/duplicate", fileHandler.Duplicate) // Duplicate file/folder
 
 	// DELETE
 	protected.Delete("/delete", fileHandler.Delete) // Delete file/folder
 
-	// Root endpoint - List available storages
-	app.Get("/", fileHandler.ListStorages)
+	protected.Get("/search", fileHandler.SearchFiles)
+	protected.Get("/recent", fileHandler.GetRecent)
+	protected.Get("/reindex", fileHandler.Reindex)
+	protected.Post("/stats", fileHandler.GetStats)
+
+	// Root endpoint - List available storages (also protected)
+	protected.Get("/", fileHandler.ListStorages)
 
 	// Health check
 	app.Get("/ping", func(c *fiber.Ctx) error {
