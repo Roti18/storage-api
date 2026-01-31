@@ -1,24 +1,24 @@
 # Storage API List
 
 ## System & Auth (Public)
-- GET /
-  Ex: http://localhost:3003/
-- GET /ping
-  Ex: http://localhost:3003/ping (Response include latency)
 - POST /api/login
   Body: {"username": "admin", "password": "password123"}
   Ex: curl -X POST http://localhost:3003/api/login -d '{"username":"admin","password":"password123"}' -H "Content-Type: application/json"
+- GET /ping
+  Ex: http://localhost:3003/ping (Response include latency)
 
-## Read Operations (Public)
+## API Operations (Protected)
+Auth Header: `Authorization: Bearer <token>`
+
+### Read Operations
+- GET /api/
+  List available storages
 - GET /api/files
   Ex: http://localhost:3003/api/files?storage=ssd1&path=/documents
 - GET /api/preview
   Ex: http://localhost:3003/api/preview?storage=ssd1&path=/images/photo.jpg
 - GET /api/download
   Ex: http://localhost:3003/api/download?storage=ssd1&path=/videos/movie.mp4
-
-## Write Operations (Protected)
-Auth Header: Authorization: Bearer <token>
 
 - POST /api/folder
   Body: {"storage": "ssd1", "path": "/new_folder"}
