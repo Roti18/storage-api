@@ -1,0 +1,10 @@
+.git
+
+storage_index.db*
+storage_index.db-shm
+storage_index.db-wal
+bin
+dist
+vendor
+.idea
+.vscode
