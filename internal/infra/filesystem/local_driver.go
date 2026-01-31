@@ -27,6 +27,39 @@ func isHiddenFile(name string) bool {
 	return hiddenFileRegex.MatchString(name)
 }
 
+// Extensions for code/project files that should be ignored in Global Search/Recent/Index
+var projectJunkExtensions = map[string]bool{
+	// Code
+	"c": true, "cpp": true, "h": true, "hpp": true, "cs": true, "go": true,
+	"java": true, "js": true, "jsx": true, "ts": true, "tsx": true, "php": true,
+	"py": true, "rb": true, "pl": true, "swift": true, "kt": true, "kts": true,
+	"rs": true, "dart": true, "lua": true, "sh": true, "bat": true, "ps1": true,
+	"cmd": true, "vb": true, "vbs": true, "sql": true, "r": true, "m": true,
+	// Web / Config
+	"html": true, "css": true, "scss": true, "less": true, "sass": true,
+	"json": true, "xml": true, "yaml": true, "yml": true, "toml": true, "ini": true,
+	"env": true, "lock": true, "mod": true, "sum": true, "map": true,
+	"gitignore": true, "dockerignore": true,
+	// Binary/Build
+	"class": true, "jar": true, "war": true, "ear": true, "o": true, "obj": true,
+	"dll": true, "so": true, "dylib": true, "exe": true, "bin": true, "dat": true,
+	"log": true, "tmp": true, "bak": true, "swp": true,
+}
+
+func isProjectJunk(name string) bool {
+	// Check exact filenames
+	if name == "LICENSE" || name == "README" || name == "Makefile" {
+		return true
+	}
+
+	// Check extensions
+	ext := strings.ToLower(filepath.Ext(name))
+	if len(ext) > 1 {
+		return projectJunkExtensions[ext[1:]]
+	}
+	return false
+}
+
 type LocalDriver struct {
 	Mounts map[string]string // storage name -> path
 }
@@ -35,7 +68,7 @@ func NewLocalDriver(mounts map[string]string) *LocalDriver {
 	return &LocalDriver{Mounts: mounts}
 }
 
-// Resolve storage name ke root path (Case Insensitive)
+// Resolve storage name to root path (Case Insensitive)
 func (d *LocalDriver) getStorageRoot(storageName string) (string, error) {
 	storageName = strings.ToLower(storageName)
 	for name, path := range d.Mounts {
@@ -46,7 +79,7 @@ func (d *LocalDriver) getStorageRoot(storageName string) (string, error) {
 	return "", fmt.Errorf("storage '%s' not found", storageName)
 }
 
-// Validasi path biar gak keluar dari root
+// Validate path to ensure it doesn't escape the root
 func (d *LocalDriver) validatePath(storageName, subPath string) (string, error) {
 	rootPath, err := d.getStorageRoot(storageName)
 	if err != nil {
@@ -118,7 +151,7 @@ func (d *LocalDriver) getDiskUsage(path string) (total, used, free uint64) {
 	return total, used, free
 }
 
-// READ: List isi folder
+// READ: List directory contents
 func (d *LocalDriver) ReadDir(storageName, subPath string, showHidden bool) ([]domain.FileInfo, error) {
 	fullPath, err := d.validatePath(storageName, subPath)
 	if err != nil {
@@ -241,6 +274,11 @@ func (d *LocalDriver) ReadDirRecursive(storageName string, showHidden bool) ([]d
 					return nil
 				}
 			}
+		}
+
+		// Filter Project/Code Junk from Index
+		if !info.IsDir() && isProjectJunk(name) {
+			return nil
 		}
 
 		allFiles = append(allFiles, domain.FileInfo{
