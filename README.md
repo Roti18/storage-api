@@ -43,11 +43,39 @@ Add header: `Authorization: Bearer <token>`
 | `POST` | `/api/stats` | File Counts by Category | `?storage=nx1`<br>Body: `{"images": ["jpg", "png"], "videos": ["mp4"], "others": []}` |
 | `GET` | `/api/reindex` | Force Re-index | - |
 
+## Deployment & Storage Setup
+
+### 1. Permanent Storage Mounting (Recommended)
+For Linux servers, it is highly recommended to use permanent mount points (e.g., `/mnt/ssd`) instead of temporary desktop mounts (`/run/media/...`). This prevents path changes after unexpected reboots or power outages.
+
+A script is provided to automate this:
+```bash
+cd storages-api
+chmod +x setup_ssd.sh
+./setup_ssd.sh
+```
+This script will:
+- Add a permanent entry to `/etc/fstab` using the SSD's UUID.
+- Create `/mnt/ssd` and mount the drive there.
+- Automatically update your `.env` with the new paths.
+- Restart the Docker containers.
+
+### 2. Manual Installation
+If you prefer manual setup:
+1. Copy `.env.example` to `.env`.
+2. Configure your storage paths in `.env`.
+3. Run the application using Docker:
+   ```bash
+   docker-compose up -d --build
+   ```
+
 ## Configuration
 Manage settings via `.env`:
 ```env
 APP_PORT=3003
 PASSWORD=your_secure_password
 JWT_SECRET=your_secret_key
-STORAGE_MOUNTS=ssd1:/mnt/ssd,hdd1:/mnt/data
+HOST_PATH_SSD=/mnt/ssd
+HOST_PATH_HDD=/home/roniserv
+STORAGE_MOUNTS=ssd:/mnt/ssd,hdd:/home/roniserv
 ```
